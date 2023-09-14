@@ -1,0 +1,11 @@
+build/*
+log/*
+dist/*
+out/*
+log/*
+.idea/*
+war/*
+*.iml
+*.hprof
+*hs_err_pid*
+*~

@@ -2,58 +2,41 @@ package chat;
 
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
-import io.libp2p.core.AddressBook;
-import io.libp2p.core.Host;
-import io.libp2p.core.PeerId;
+import io.libp2p.core.*;
 import io.libp2p.core.crypto.PrivKey;
 import io.libp2p.core.multiformats.Multiaddr;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.*;
 import io.netty.handler.codec.http.*;
-import io.netty.util.CharsetUtil;
 import org.peergos.BlockRequestAuthoriser;
-import org.peergos.EmbeddedIpfs;
-import org.peergos.HostBuilder;
-import org.peergos.PeerAddresses;
-import org.peergos.blockstore.Blockstore;
-import org.peergos.blockstore.RamBlockstore;
-import org.peergos.config.Config;
-import org.peergos.config.IdentitySection;
-import org.peergos.protocol.dht.RamRecordStore;
-import org.peergos.protocol.dht.RecordStore;
+import org.peergos.*;
+import org.peergos.blockstore.*;
+import org.peergos.config.*;
+import org.peergos.protocol.dht.*;
 import org.peergos.protocol.http.HttpProtocol;
 import org.peergos.util.Version;
 
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 public class Chat {
-
     private EmbeddedIpfs embeddedIpfs;
-
-    public static final Version CURRENT_VERSION = Version.parse("0.0.1");
-
-    private static final Logger LOG = Logger.getGlobal();
 
     private static HttpProtocol.HttpRequestProcessor proxyHandler() {
         return (s, req, h) -> {
-            ByteBuf content = ((FullHttpRequest) req).content();
-            CharSequence contents = content.getCharSequence(0, content.readableBytes(), Charset.defaultCharset());
-            String output = contents.toString();
+            ByteBuf content = req.content();
+            String output = content.getCharSequence(0, content.readableBytes(), Charset.defaultCharset()).toString();
             System.out.println("received msg:" + output);
             FullHttpResponse replyOk = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.buffer(0));
             replyOk.headers().set(HttpHeaderNames.CONTENT_LENGTH, 0);
             h.accept(replyOk.retain());
         };
     }
-
     public Chat() {
         RecordStore recordStore = new RamRecordStore();
         Blockstore blockStore = new RamBlockstore();
 
-        LOG.info("Starting Chat version: " + CURRENT_VERSION);
+        System.out.println("Starting Chat version: " + Version.parse("0.0.1"));
         int portNumber = 10000 + new Random().nextInt(50000);
         List<MultiAddress> swarmAddresses = List.of(new MultiAddress("/ip6/::/tcp/" + portNumber));
         List<MultiAddress> bootstrapNodes = new ArrayList<>(Config.defaultBootstrapNodes);
@@ -72,7 +55,7 @@ public class Chat {
                 authoriser, Optional.of(Chat.proxyHandler()));
         embeddedIpfs.start();
         Thread shutdownHook = new Thread(() -> {
-            LOG.info("Stopping server...");
+            System.out.println("Stopping server...");
             try {
                 embeddedIpfs.stop().join();
             } catch (Exception ex) {
@@ -80,7 +63,6 @@ public class Chat {
             }
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-
         System.out.println("Enter PeerId of other node:");
         Scanner in = new Scanner(System.in);
         String peerIdStr = in.nextLine().trim();
@@ -89,10 +71,7 @@ public class Chat {
         }
         Multihash targetNodeId = Multihash.fromBase58(peerIdStr);
         PeerId targetPeerId = PeerId.fromBase58(targetNodeId.bareMultihash().toBase58());
-
-        Multiaddr[] addressesToDial = getAddresses(targetNodeId);
-
-        runChat(embeddedIpfs.node, embeddedIpfs.p2pHttp.get(), targetPeerId, addressesToDial);
+        runChat(embeddedIpfs.node, embeddedIpfs.p2pHttp.get(), targetPeerId, getAddresses(targetNodeId));
     }
     private Multiaddr[] getAddresses(Multihash targetNodeId) {
         AddressBook addressBook = embeddedIpfs.node.getAddressBook();
@@ -105,13 +84,9 @@ public class Chat {
             if (matching.isEmpty()) {
                 throw new IllegalStateException("Target not found: " + targetNodeId);
             }
-            PeerAddresses peer = matching.get();
-            allAddresses = peer.addresses.stream().map(a -> Multiaddr.fromString(a.toString())).toArray(Multiaddr[]::new);
+            allAddresses = matching.get().addresses.stream().map(a -> Multiaddr.fromString(a.toString())).toArray(Multiaddr[]::new);
         }
-        Multiaddr[] addressesToDial = targetAddressesOpt.isPresent() ?
-                Arrays.asList(targetAddressesOpt.get()).toArray(Multiaddr[]::new)
-                : allAddresses;
-        return addressesToDial;
+        return targetAddressesOpt.isPresent() ? Arrays.asList(targetAddressesOpt.get()).toArray(Multiaddr[]::new) : allAddresses;
     }
     private void runChat(Host node, HttpProtocol.Binding p2pHttpBinding, PeerId targetPeerId, Multiaddr[] addressesToDial) {
         System.out.println("Type message:");
@@ -124,9 +99,7 @@ public class Chat {
             proxier.send(httpRequest.retain()).join().release();
         }
     }
-
     public static void main(String[] args) {
         new Chat();
     }
-
 }

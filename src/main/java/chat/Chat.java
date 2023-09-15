@@ -11,6 +11,7 @@ import org.peergos.BlockRequestAuthoriser;
 import org.peergos.*;
 import org.peergos.blockstore.*;
 import org.peergos.config.*;
+import org.peergos.net.ConnectionException;
 import org.peergos.protocol.dht.*;
 import org.peergos.protocol.http.HttpProtocol;
 import org.peergos.util.Version;
@@ -32,7 +33,7 @@ public class Chat {
             h.accept(replyOk.retain());
         };
     }
-    public Chat() {
+    public Chat() throws ConnectionException {
         RecordStore recordStore = new RamRecordStore();
         Blockstore blockStore = new RamBlockstore();
 
@@ -54,15 +55,6 @@ public class Chat {
                 identitySection,
                 authoriser, Optional.of(Chat.proxyHandler()));
         embeddedIpfs.start();
-        Thread shutdownHook = new Thread(() -> {
-            System.out.println("Stopping server...");
-            try {
-                embeddedIpfs.stop().join();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
         System.out.println("Enter PeerId of other node:");
         Scanner in = new Scanner(System.in);
         String peerIdStr = in.nextLine().trim();
@@ -71,22 +63,8 @@ public class Chat {
         }
         Multihash targetNodeId = Multihash.fromBase58(peerIdStr);
         PeerId targetPeerId = PeerId.fromBase58(targetNodeId.bareMultihash().toBase58());
-        runChat(embeddedIpfs.node, embeddedIpfs.p2pHttp.get(), targetPeerId, getAddresses(targetNodeId));
-    }
-    private Multiaddr[] getAddresses(Multihash targetNodeId) {
-        AddressBook addressBook = embeddedIpfs.node.getAddressBook();
-        PeerId targetPeerId = PeerId.fromBase58(targetNodeId.bareMultihash().toBase58());
-        Optional<Multiaddr> targetAddressesOpt = addressBook.get(targetPeerId).join().stream().findFirst();
-        Multiaddr[] allAddresses = null;
-        if (targetAddressesOpt.isEmpty()) {
-            List<PeerAddresses> closestPeers = embeddedIpfs.dht.findClosestPeers(targetNodeId, 1, embeddedIpfs.node);
-            Optional<PeerAddresses> matching = closestPeers.stream().filter(p -> p.peerId.equals(targetNodeId)).findFirst();
-            if (matching.isEmpty()) {
-                throw new IllegalStateException("Target not found: " + targetNodeId);
-            }
-            allAddresses = matching.get().addresses.stream().map(a -> Multiaddr.fromString(a.toString())).toArray(Multiaddr[]::new);
-        }
-        return targetAddressesOpt.isPresent() ? Arrays.asList(targetAddressesOpt.get()).toArray(Multiaddr[]::new) : allAddresses;
+        runChat(embeddedIpfs.node, embeddedIpfs.p2pHttp.get(), targetPeerId,
+                EmbeddedIpfs.getAddresses(embeddedIpfs.node, embeddedIpfs.dht, targetNodeId));
     }
     private void runChat(Host node, HttpProtocol.Binding p2pHttpBinding, PeerId targetPeerId, Multiaddr[] addressesToDial) {
         System.out.println("Type message:");
@@ -99,7 +77,7 @@ public class Chat {
             proxier.send(httpRequest.retain()).join().release();
         }
     }
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ConnectionException {
         new Chat();
     }
 }

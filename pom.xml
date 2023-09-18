@@ -6,48 +6,69 @@
 
     <groupId>com.github.peergos</groupId>
     <artifactId>nabu-chat</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>v0.0.1</version>
+
+    <name>nabu-chat</name>
+    <url>https://github.com/peergos/nabu-chat</url>
+
+    <issueManagement>
+        <url>https://github.com/peergos/nabu-chat/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
+    <scm>
+        <url>https://github.com/peergos/nabu-chat</url>
+        <connection>scm:git:git://github.com/peergos/nabu-chat.git</connection>
+        <developerConnection>scm:git:git@github.com:peergos/nabu-chat.git</developerConnection>
+    </scm>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <version.nabu>v0.5.0</version.nabu>
     </properties>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>2.5.2</version>
-                <executions>
-                    <execution>
-                        <id>install-external</id>
-                        <phase>clean</phase>
-                        <configuration>
-                            <file>${basedir}/lib/nabu-v0.1.0-SNAPSHOT-jar-with-dependencies.jar</file>
-                            <repositoryLayout>default</repositoryLayout>
-                            <groupId>com.github.peergos</groupId>
-                            <artifactId>nabu</artifactId>
-                            <version>0.0.1</version>
-                            <packaging>jar</packaging>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
             <groupId>com.github.peergos</groupId>
             <artifactId>nabu</artifactId>
-            <version>0.0.1</version>
+            <version>${version.nabu}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

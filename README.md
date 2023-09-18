@@ -8,8 +8,7 @@ Use standard maven commands
 
 ## To Run
 
-copy jar file from ./lib and ./target to a folder
 ```
-java -cp nabu-v0.5.0.jar:nabu-chat-v0.0.1.jar  chat.Chat
+java -cp nabu-vX.X.X-with-dependencies.jar:nabu-chat-v0.0.1.jar  chat.Chat
 ```
 

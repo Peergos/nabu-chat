@@ -2,13 +2,20 @@
 
 Simple cmd line chat using Nabu primitives
 
+## Screenshot
+
+![Chat](chat-screenshot.png)
+
 ## To Build
 
-Use standard maven commands
+```
+mvn clean
+mvn package
+```
 
 ## To Run
 
 ```
-java -cp nabu-vX.X.X-with-dependencies.jar:nabu-chat-v0.0.1.jar  chat.Chat
+java -cp nabu-vX.X.X-jar-with-dependencies.jar:nabu-chat-v0.0.1.jar  chat.Chat
 ```
 

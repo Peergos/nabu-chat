@@ -27,7 +27,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <version.nabu>v0.5.0</version.nabu>
+        <version.nabu>v0.7.0</version.nabu>
     </properties>
 
     <repositories>

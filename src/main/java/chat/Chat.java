@@ -47,9 +47,9 @@ public class Chat {
         PeerId peerId = builder.getPeerId();
         System.out.println("My PeerId:" + peerId.toBase58());
         IdentitySection identitySection = new IdentitySection(privKey.bytes(), peerId);
-        BlockRequestAuthoriser authoriser = (c, b, p, a) -> CompletableFuture.completedFuture(true);
+        BlockRequestAuthoriser authoriser = (c, p, a) -> CompletableFuture.completedFuture(true);
 
-        embeddedIpfs = EmbeddedIpfs.build(recordStore, blockStore,
+        embeddedIpfs = EmbeddedIpfs.build(recordStore, blockStore, false,
                 swarmAddresses,
                 bootstrapNodes,
                 identitySection,
@@ -62,7 +62,7 @@ public class Chat {
             throw new IllegalArgumentException("Invalid PeerId");
         }
         Multihash targetNodeId = Multihash.fromBase58(peerIdStr);
-        PeerId targetPeerId = PeerId.fromBase58(targetNodeId.bareMultihash().toBase58());
+        PeerId targetPeerId = PeerId.fromBase58(targetNodeId.toBase58());
         runChat(embeddedIpfs.node, embeddedIpfs.p2pHttp.get(), targetPeerId,
                 EmbeddedIpfs.getAddresses(embeddedIpfs.node, embeddedIpfs.dht, targetNodeId));
     }

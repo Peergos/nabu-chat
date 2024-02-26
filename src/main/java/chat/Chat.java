@@ -1,24 +1,43 @@
 package chat;
 
-import io.ipfs.multiaddr.MultiAddress;
-import io.ipfs.multihash.Multihash;
-import io.libp2p.core.*;
-import io.libp2p.core.crypto.PrivKey;
-import io.libp2p.core.multiformats.Multiaddr;
-import io.netty.buffer.*;
-import io.netty.handler.codec.http.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+
 import org.peergos.BlockRequestAuthoriser;
-import org.peergos.*;
-import org.peergos.blockstore.*;
-import org.peergos.config.*;
+import org.peergos.EmbeddedIpfs;
+import org.peergos.HostBuilder;
+import org.peergos.blockstore.Blockstore;
+import org.peergos.blockstore.RamBlockstore;
+import org.peergos.config.Config;
+import org.peergos.config.IdentitySection;
 import org.peergos.net.ConnectionException;
-import org.peergos.protocol.dht.*;
+import org.peergos.protocol.bitswap.Bitswap;
+import org.peergos.protocol.dht.RamRecordStore;
+import org.peergos.protocol.dht.RecordStore;
 import org.peergos.protocol.http.HttpProtocol;
 import org.peergos.util.Version;
 
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import io.ipfs.multiaddr.MultiAddress;
+import io.ipfs.multihash.Multihash;
+import io.libp2p.core.Host;
+import io.libp2p.core.PeerId;
+import io.libp2p.core.crypto.PrivKey;
+import io.libp2p.core.multiformats.Multiaddr;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 
 public class Chat {
     private EmbeddedIpfs embeddedIpfs;
@@ -53,7 +72,9 @@ public class Chat {
                 swarmAddresses,
                 bootstrapNodes,
                 identitySection,
-                authoriser, Optional.of(Chat.proxyHandler()));
+                authoriser, 
+                Optional.of(Chat.proxyHandler()), 
+                Optional.empty());
         embeddedIpfs.start();
         System.out.println("Enter PeerId of other node:");
         Scanner in = new Scanner(System.in);
